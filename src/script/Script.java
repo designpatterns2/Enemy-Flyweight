@@ -25,6 +25,7 @@ import java.nio.IntBuffer;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+import entity.*;
 import main.Player;
 
 import com.jme.bounding.BoundingSphere;
@@ -86,23 +87,6 @@ import jglcore.JGL;
 import jglcore.JGL_3DMatrix;
 import jglcore.JGL_3DVector;
 import jglcore.JGL_3DMesh;
-import entity.Entity;
-import entity.Scriptable;
-import entity.PlayerEntity;
-import entity.Shoot;
-import entity.Weapon;
-import entity.Zombie01;
-import entity.Rocket01;
-import entity.Turret01;
-import entity.Skeleton01;
-import entity.Factory;
-import entity.Blood;
-import entity.ScriptBox;
-import entity.KeyObject;
-import entity.DoorObject;
-import entity.StaticObject;
-import entity.Explosible;
-import entity.Explosion;
 import struct.Explode;
 import struct.Explode2D;
 import struct.Explode3D;
@@ -642,9 +626,13 @@ public final class Script {
 			Shape shape = getCShape(script);
 			Mover mover = getCMover(script, shape);
 			Motion motion = getCMotion(script);
-			
-			Skeleton01 s = new Skeleton01(id, team, px, py, pz, ax, ay, az, life, dam, speed, node, bloods, expNode, 
-										shape, mover, motion);
+
+			Skeleton01 s = EntityFactory.getSkeleton(id, node, bloods, expNode,shape, motion);
+			System.out.println(s + "id: " + id);
+			s.setTeam(team);
+			s.setPosition(px, py, pz);
+			s.setAngles(ax, ay, az);
+			s.setStats(life, dam, speed);
 			
 			s.linkWeapon(Script.getWeapon(script, World.difficulty));
 			
@@ -653,6 +641,7 @@ public final class Script {
 			JGL_3DVector[] points = new JGL_3DVector[nbKeys];
 			for (int j=0; j<nbKeys; j++)
 				points[j] = getVector(script);
+
 			s.linkAI(new SkeletonAI(s, points, shootFrequency, false));
 			
 			while (script.hasMoreTokens()) {

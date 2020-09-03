@@ -45,7 +45,7 @@ import com.jmex.model.animation.KeyframeController;
 public final class Skeleton01 implements Entity, Scriptable {
 	
 	private String name;
-	private int state;
+	private int state = ACTIVE;
 	
 	private int team;
 	private float lifeMax;
@@ -54,7 +54,7 @@ public final class Skeleton01 implements Entity, Scriptable {
 	private float sp;
 	
 	private static long DYING_PERIOD = 0l;
-	private long dyingCumulTime;
+	private long dyingCumulTime = 0l;
 	
 	private Node node;
 	private KeyframeController kc;
@@ -70,7 +70,7 @@ public final class Skeleton01 implements Entity, Scriptable {
 	
 	private Explosion expNode;
 	
-	private boolean collidable;
+	private boolean collidable = true;
 	private Mover cmover;
 	private Motion cmotion;
 	private Shape cshape;
@@ -79,8 +79,8 @@ public final class Skeleton01 implements Entity, Scriptable {
 	private Quaternion qy;
 	
 	private JGL_3DVector way;
-	private int forward;
-	private int asides;
+	private int forward = 0;
+	private int asides = 0;
 	private float diag;
 	
 	private Weapon weapon;
@@ -88,13 +88,61 @@ public final class Skeleton01 implements Entity, Scriptable {
 	
 	private ScriptBox scriptbox;
 	
-	
-	public Skeleton01(	String id, int team, float posX, float posY, float posZ, 
-						float angleX, float angleY, float angleZ, 
-						float maxLife, float damage, float speed, 
-						Node protoNode, Blood[] bloods, Explosion explode, 
+
+	public Skeleton01(String id, Node protoNode, Blood[] bloods, Explosion explode,
+					  Shape shape, Motion motion) {
+		name = id;
+		node = protoNode;
+		if (protoNode.getChild(0).getControllerCount()>0) {
+			kc = (KeyframeController)protoNode.getChild(0).getController(0);
+			kspeed = kc.getSpeed() - (kc.getSpeed() * (0.2f - (0.2f*JGL_Math.rnd()) ));
+			nbFrames = kc.keyframes.size();
+		} else {
+			kc = null;
+			kspeed = 0f;
+			nbFrames = 1;
+		}
+		setAnimationFrames(0, nbFrames - 1);
+
+		this.bloods = bloods;
+		bloodIndex = 0;
+
+		expNode = explode;
+
+		cmover = new Mover_gravity(new JGL_3DVector(0f, 0f, -1f));
+
+		cshape = shape;
+
+		cmotion = motion;
+
+		qy = new Quaternion();
+		way = new JGL_3DVector();
+		diag = JGL_Math.cos(45f);
+	}
+
+	public void setPosition(float posX, float posY, float posZ) {
+		cshape.setPosition(new JGL_3DVector(posX, posY, posZ));
+	}
+
+	public void setAngles(float angleX, float angleY, float angleZ) {
+		angles = new JGL_3DVector(angleX, angleY, angleZ);
+	}
+
+	public void setStats(float maxLife, float damage, float speed) {
+		life = lifeMax = maxLife;
+		dam = damage;
+		sp = speed;
+		cmover.setSpeed(sp);
+	}
+
+
+
+	public Skeleton01(	String id, int team, float posX, float posY, float posZ,
+						float angleX, float angleY, float angleZ,
+						float maxLife, float damage, float speed,
+						Node protoNode, Blood[] bloods, Explosion explode,
 						Shape shape, Mover mover, Motion motion) {
-		
+
 		name = id;
 		state = ACTIVE;
 
@@ -120,9 +168,9 @@ public final class Skeleton01 implements Entity, Scriptable {
 
 		this.bloods = bloods;
 		bloodIndex = 0;
-		
+
 		expNode = explode;
-		
+
 		collidable = true;
 		//cmover = mover;
 		cmover = new Mover_gravity(new JGL_3DVector(0f, 0f, -1f));
@@ -137,12 +185,12 @@ public final class Skeleton01 implements Entity, Scriptable {
 		forward = 0;
 		asides = 0;
 		diag = JGL_Math.cos(45f);
-		
+
 		weapon = null;
 		ai = null;
 		scriptbox = null;
 	}
-	
+
 	
 	/**
 	 * Sets the min and max keyframes for the animation to play.
@@ -171,7 +219,6 @@ public final class Skeleton01 implements Entity, Scriptable {
 		life = lifeMax;
 		bloodIndex = 0;
 		collidable = true;
-		cmover.setSpeed(sp);
 		setForwardMove(0);
 		setSideMove(0);
 		if (scriptbox!=null)
@@ -321,9 +368,9 @@ public final class Skeleton01 implements Entity, Scriptable {
 	public void setDying() {
 		// TODO Auto-generated method stub
 		setCollidable(false);
-		setAnimationFrames(nbFrames - 1, nbFrames - 1);
+		//setAnimationFrames(nbFrames - 1, nbFrames - 1);
 		dyingCumulTime = 0l;
-		cmover = new Mover_none();
+		//cmover = new Mover_none();
 		setForwardMove(0);
 		setSideMove(0);
 		ai = null;
@@ -546,14 +593,14 @@ public final class Skeleton01 implements Entity, Scriptable {
 		// TODO Auto-generated method stub
 		scriptbox = arg;
 	}
-	
-	
+
+
 	public Object clone() {
 		Blood bs[] = new Blood[bloods.length];
 	    for (int i=0; i<bloods.length; i++)
 	    	bs[i] = (Blood)bloods[i].clone();
-	    return new Skeleton01(name, team, getPosition().x, getPosition().y, getPosition().z, 
-	    					angles.x, angles.y, angles.z, lifeMax, dam, sp, node, bs, (Explosion)expNode.clone(), 
+	    return new Skeleton01(name, team, getPosition().x, getPosition().y, getPosition().z,
+	    					angles.x, angles.y, angles.z, lifeMax, dam, sp, node, bs, (Explosion)expNode.clone(),
 	    					(Shape)cshape.clone(), (Mover)cmover.clone(), (Motion)cmotion.clone());
 	}
 
